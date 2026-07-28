@@ -1,0 +1,11 @@
+{
+  "name": "研政 · Politics Lab",
+  "short_name": "研政",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f3efe5",
+  "theme_color": "#071d2d",
+  "icons": [
+    { "src": "./politics-lab.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
