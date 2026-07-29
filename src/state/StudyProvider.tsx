@@ -12,7 +12,12 @@ import {
 import { POLITICS_LESSONS } from '../data';
 import { authRedirectUrl, isSupabaseConfigured, supabase } from '../lib/supabase';
 import type { SelfTestOptionId, SelfTestQuestion } from '../types';
-import { nextRecallProgress, recallDay } from '../utils/recall';
+import {
+  nextRecallProgress,
+  recallDay,
+  recallIntervalLabel,
+  recallStageFromInterval,
+} from '../utils/recall';
 import type {
   CloudStatus,
   LessonProgress,
@@ -22,6 +27,7 @@ import type {
   QuizAttempt,
   RecallProgress,
   RecallRating,
+  RecallReviewLog,
 } from './studyTypes';
 
 const STORAGE_PREFIX = 'politics-lab-state-v1';
@@ -51,6 +57,7 @@ function freshState(): PoliticsStudyState {
     quizAttempts: {},
     practiceLogs: [],
     recallProgress: {},
+    recallHistory: [],
     dailyMinutes: {},
   };
 }
@@ -132,10 +139,22 @@ function normalizeState(value: unknown): PoliticsStudyState {
         ? item.lastRating as RecallRating
         : null;
       if (!lastRating || !/^\d{4}-\d{2}-\d{2}$/.test(String(item.dueOn))) continue;
+      const intervalDays = Math.max(0, Math.min(60, Number(item.intervalDays) || 0));
+      const legacyDueDate = new Date(`${String(item.dueOn)}T00:00:00`);
+      const legacyDueAt = Number.isFinite(legacyDueDate.getTime())
+        ? legacyDueDate.toISOString()
+        : new Date().toISOString();
+      const dueAt = typeof item.dueAt === 'string' && Number.isFinite(Date.parse(item.dueAt))
+        ? item.dueAt
+        : legacyDueAt;
       recallProgress[cardId] = {
         cardId: safeText(item.cardId, 100) || safeText(cardId, 100),
         dueOn: String(item.dueOn),
-        intervalDays: Math.max(0, Math.min(60, Number(item.intervalDays) || 0)),
+        dueAt,
+        stage: Math.max(0, Math.min(7, Number.isFinite(Number(item.stage))
+          ? Number(item.stage)
+          : recallStageFromInterval(intervalDays))),
+        intervalDays,
         reviews: Math.max(1, Math.min(10_000, Number(item.reviews) || 1)),
         lapses: Math.max(0, Math.min(10_000, Number(item.lapses) || 0)),
         streak: Math.max(0, Math.min(10_000, Number(item.streak) || 0)),
@@ -144,6 +163,51 @@ function normalizeState(value: unknown): PoliticsStudyState {
       };
     }
   }
+  const recallHistoryMap = new Map<string, RecallReviewLog>();
+  if (Array.isArray(candidate.recallHistory)) {
+    for (const raw of candidate.recallHistory.slice(0, 5_000)) {
+      if (!raw || typeof raw !== 'object') continue;
+      const item = raw as Partial<RecallReviewLog>;
+      const rating = ['again', 'fuzzy', 'known'].includes(String(item.rating))
+        ? item.rating as RecallRating
+        : null;
+      const reviewedAt = safeText(item.reviewedAt, 40);
+      const dueAt = safeText(item.dueAt, 40);
+      if (!item.id || !item.cardId || !rating || !Number.isFinite(Date.parse(reviewedAt)) || !Number.isFinite(Date.parse(dueAt))) continue;
+      const log: RecallReviewLog = {
+        id: safeText(item.id, 120),
+        cardId: safeText(item.cardId, 100),
+        rating,
+        reviewedAt,
+        previousStage: Math.max(0, Math.min(7, Number(item.previousStage) || 0)),
+        nextStage: Math.max(0, Math.min(7, Number(item.nextStage) || 0)),
+        dueAt,
+        intervalLabel: safeText(item.intervalLabel, 40) || '待复习',
+      };
+      recallHistoryMap.set(log.id, log);
+    }
+  }
+  const recordedReviews = new Set(
+    [...recallHistoryMap.values()].map((item) => `${item.cardId}|${item.reviewedAt}`),
+  );
+  for (const item of Object.values(recallProgress)) {
+    const signature = `${item.cardId}|${item.lastReviewedAt}`;
+    if (recordedReviews.has(signature)) continue;
+    const migrated: RecallReviewLog = {
+      id: `recall-legacy-${item.cardId}-${item.lastReviewedAt}`.slice(0, 120),
+      cardId: item.cardId,
+      rating: item.lastRating,
+      reviewedAt: item.lastReviewedAt,
+      previousStage: Math.max(0, item.stage - 1),
+      nextStage: item.stage,
+      dueAt: item.dueAt,
+      intervalLabel: recallIntervalLabel(item),
+    };
+    recallHistoryMap.set(migrated.id, migrated);
+  }
+  const recallHistory = [...recallHistoryMap.values()]
+    .sort((a, b) => b.reviewedAt.localeCompare(a.reviewedAt))
+    .slice(0, 3_000);
   const activeLessonId = POLITICS_LESSONS.some((lesson) => lesson.id === candidate.activeLessonId)
     ? candidate.activeLessonId as string
     : FIRST_LESSON_ID;
@@ -157,6 +221,7 @@ function normalizeState(value: unknown): PoliticsStudyState {
     quizAttempts,
     practiceLogs,
     recallProgress,
+    recallHistory,
     dailyMinutes,
   };
 }
@@ -230,6 +295,8 @@ function mergeStudyStates(remoteValue: PoliticsStudyState, localValue: PoliticsS
     const existing = recallProgress[cardId];
     if (!existing || item.lastReviewedAt >= existing.lastReviewedAt) recallProgress[cardId] = item;
   }
+  const recallHistoryMap = new Map(remote.recallHistory.map((item) => [item.id, item]));
+  for (const item of local.recallHistory) recallHistoryMap.set(item.id, item);
   const localIsNewer = Date.parse(local.updatedAt) >= Date.parse(remote.updatedAt);
   return normalizeState({
     schemaVersion: 1,
@@ -241,6 +308,9 @@ function mergeStudyStates(remoteValue: PoliticsStudyState, localValue: PoliticsS
     quizAttempts,
     practiceLogs: [...logMap.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 300),
     recallProgress,
+    recallHistory: [...recallHistoryMap.values()]
+      .sort((a, b) => b.reviewedAt.localeCompare(a.reviewedAt))
+      .slice(0, 3_000),
     dailyMinutes,
   });
 }
@@ -582,11 +652,22 @@ export function StudyProvider({ children }: { children: ReactNode }) {
       const now = new Date();
       const previous = stateRef.current.recallProgress[cardId];
       const next = nextRecallProgress(cardId, previous, rating, now);
+      const review: RecallReviewLog = {
+        id: nextId('recall'),
+        cardId,
+        rating,
+        reviewedAt: now.toISOString(),
+        previousStage: previous?.stage || 0,
+        nextStage: next.stage,
+        dueAt: next.dueAt,
+        intervalLabel: recallIntervalLabel(next),
+      };
       const today = recallDay(now);
       const firstReviewToday = !previous || recallDay(new Date(previous.lastReviewedAt)) !== today;
       mutate((current) => ({
         ...current,
         recallProgress: { ...current.recallProgress, [cardId]: next },
+        recallHistory: [review, ...current.recallHistory].slice(0, 3_000),
         dailyMinutes: firstReviewToday
           ? { ...current.dailyMinutes, [today]: (current.dailyMinutes[today] || 0) + 1 }
           : current.dailyMinutes,
@@ -594,7 +675,10 @@ export function StudyProvider({ children }: { children: ReactNode }) {
       appendEvent('recall.rated', cardId, {
         rating,
         dueOn: next.dueOn,
+        dueAt: next.dueAt,
+        stage: next.stage,
         intervalDays: next.intervalDays,
+        reviewId: review.id,
       });
       return next;
     },
@@ -619,7 +703,8 @@ export function StudyProvider({ children }: { children: ReactNode }) {
       Object.keys(guest.lessons).length > 0 ||
       Object.keys(guest.quizAttempts).length > 0 ||
       guest.practiceLogs.length > 0 ||
-      Object.keys(guest.recallProgress).length > 0;
+      Object.keys(guest.recallProgress).length > 0 ||
+      guest.recallHistory.length > 0;
     if (!hasProgress) return '本机匿名进度为空，无需导入。';
 
     const imported: PoliticsStudyState = {

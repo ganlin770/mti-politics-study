@@ -649,6 +649,12 @@ h1, h2, h3, strong, b { font-family: inherit; }
 .recall-explanation .memory-hook p { color: var(--blue); font-size: 16px; font-weight: 620; line-height: 1.65; }
 .keyword-list { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
 .keyword-list b { padding: 7px 10px; border-radius: 9px; background: rgb(0 113 227 / 8%); color: #005fb8; font-size: 11px; font-weight: 620; }
+.recall-answer-basis a { display: grid; grid-template-columns: 19px minmax(0, 1fr) 14px; align-items: center; gap: 2px 10px; margin-top: 12px; padding: 12px; border: 1px solid var(--separator-light); border-radius: 12px; background: rgb(255 255 255 / 72%); color: var(--text); text-decoration: none; }
+.recall-answer-basis a:hover { border-color: rgb(47 125 225 / 35%); background: var(--blue-soft); }
+.recall-answer-basis a > svg:first-child { width: 18px; height: 18px; grid-row: 1 / 3; color: var(--blue); }
+.recall-answer-basis a > svg:last-child { width: 13px; height: 13px; grid-column: 3; grid-row: 1 / 3; color: var(--tertiary); }
+.recall-answer-basis a b { font-size: 11px; font-weight: 650; }
+.recall-answer-basis a small { grid-column: 2; color: var(--secondary); font-size: 9px; }
 .recall-source-note { display: flex; align-items: flex-start; gap: 9px; margin-top: auto; padding-top: 22px; color: var(--secondary); font-size: 10px; line-height: 1.5; }
 .recall-source-note svg { width: 15px; height: 15px; flex: none; color: var(--blue); }
 .recall-source-note span, .recall-source-note small { display: block; }
@@ -693,6 +699,52 @@ kbd { min-width: 22px; padding: 2px 6px; border: 1px solid rgb(255 255 255 / 24%
 .recall-empty p { margin-top: 9px; color: var(--secondary); font-size: 13px; }
 .recall-empty .button { margin-top: 24px; }
 
+.daily-recall-review { padding: 24px; border: 1px solid var(--separator-light); border-radius: 26px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.daily-recall-review > header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
+.daily-recall-review > header > div:first-child > span { display: inline-flex; align-items: center; gap: 7px; color: var(--blue); font-size: 11px; font-weight: 650; }
+.daily-recall-review > header svg { width: 15px; height: 15px; }
+.daily-recall-review h2 { margin-top: 8px; font-size: 27px; letter-spacing: -.035em; }
+.daily-recall-review header p { margin-top: 6px; color: var(--secondary); font-size: 11px; }
+.recall-mastery { min-width: 128px; display: grid; grid-template-columns: 18px 1fr; gap: 2px 7px; padding: 12px 14px; border-radius: 15px; background: var(--green-soft); color: var(--green); }
+.recall-mastery svg { grid-row: 1 / 3; margin-top: 2px; }
+.recall-mastery span { font-size: 9px; }
+.recall-mastery strong { font-size: 21px; line-height: 1.1; }
+.recall-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 20px; }
+.recall-summary-grid > div { padding: 14px; border: 1px solid var(--separator-light); border-radius: 14px; background: var(--surface-muted); }
+.recall-summary-grid span, .recall-summary-grid small { display: block; color: var(--secondary); font-size: 9px; }
+.recall-summary-grid strong { display: block; margin: 5px 0; font-size: 24px; line-height: 1; }
+.recall-summary-grid small { color: var(--tertiary); }
+.recall-schedule { margin-top: 12px; padding: 16px; border-radius: 16px; background: var(--blue-soft); }
+.recall-schedule > div { display: flex; align-items: center; gap: 10px; color: #185b9c; }
+.recall-schedule > div > svg { width: 18px; height: 18px; flex: none; }
+.recall-schedule > div span, .recall-schedule > div b, .recall-schedule > div small { display: block; }
+.recall-schedule > div b { font-size: 11px; }
+.recall-schedule > div small { margin-top: 2px; font-size: 9px; font-weight: 500; opacity: .76; }
+.recall-schedule ol { display: flex; align-items: center; gap: 5px; margin: 13px 0 0; padding: 0; list-style: none; overflow-x: auto; scrollbar-width: none; }
+.recall-schedule li { position: relative; min-width: 54px; padding: 7px 9px; border: 1px solid rgb(47 125 225 / 18%); border-radius: 999px; background: rgb(255 255 255 / 72%); color: #185b9c; font-size: 9px; font-weight: 620; text-align: center; white-space: nowrap; }
+.recall-schedule li:not(:last-child)::after { content: '›'; position: absolute; right: -6px; color: rgb(24 91 156 / 45%); }
+.recall-schedule > p { margin-top: 10px; color: #4876a3; font-size: 9px; line-height: 1.55; }
+.recall-review-columns { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(270px, .65fr); gap: 12px; margin-top: 12px; }
+.recall-event-panel, .recall-week-panel { min-width: 0; padding: 17px; border: 1px solid var(--separator-light); border-radius: 16px; }
+.recall-review-columns h3 { font-size: 12px; font-weight: 650; }
+.recall-event-panel ul { margin: 10px 0 0; padding: 0; list-style: none; }
+.recall-event-panel li { display: grid; grid-template-columns: 7px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--separator-light); }
+.recall-event-panel li > i { width: 7px; height: 7px; border-radius: 50%; background: var(--orange); }
+.recall-event-panel li > i.is-again { background: var(--red); }
+.recall-event-panel li > i.is-known { background: var(--green); }
+.recall-event-panel li b, .recall-event-panel li span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recall-event-panel li b { font-size: 10px; font-weight: 610; }
+.recall-event-panel li span { margin-top: 3px; color: var(--tertiary); font-size: 8px; }
+.recall-event-panel li > small { color: var(--secondary); font-size: 8px; white-space: nowrap; }
+.recall-review-empty { margin-top: 12px; padding: 20px; border-radius: 12px; background: var(--surface-muted); color: var(--secondary); font-size: 10px; text-align: center; }
+.recall-week-list { margin-top: 10px; }
+.recall-week-list > div { display: grid; grid-template-columns: 34px minmax(50px, 1fr) 35px 30px; align-items: center; gap: 7px; min-height: 29px; color: var(--secondary); font-size: 8px; }
+.recall-week-list > div.is-today { color: var(--text); font-weight: 620; }
+.recall-week-list i { height: 4px; border-radius: 999px; background: var(--separator-light); overflow: hidden; }
+.recall-week-list i b { display: block; height: 100%; border-radius: inherit; background: var(--blue); }
+.recall-week-list strong, .recall-week-list small { font-size: 8px; text-align: right; }
+.recall-week-list small { color: var(--tertiary); }
+
 @media (max-width: 1120px) {
   .recall-workspace { grid-template-columns: minmax(0, .86fr) minmax(390px, 1.14fr); }
   .recall-guide { padding: 24px; }
@@ -709,6 +761,7 @@ kbd { min-width: 22px; padding: 2px 6px; border: 1px solid rgb(255 255 255 / 24%
   .recall-guide { order: 2; padding: 22px; border-radius: 17px; }
   .recall-question { min-height: 290px; padding: 36px 16px 24px; }
   .recall-question p { font-size: clamp(25px, 7.7vw, 34px); }
+  .recall-review-columns { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 520px) {
@@ -730,6 +783,16 @@ kbd { min-width: 22px; padding: 2px 6px; border: 1px solid rgb(255 255 255 / 24%
   .recall-card > footer { display: none; }
   .recall-guide { padding: 20px; }
   .recall-explanation p { font-size: 13px; }
+  .daily-recall-review { padding: 18px 14px; border-radius: 20px; }
+  .daily-recall-review > header { gap: 12px; }
+  .daily-recall-review h2 { font-size: 23px; }
+  .daily-recall-review header p { max-width: 190px; line-height: 1.5; }
+  .recall-mastery { min-width: 105px; padding: 10px; }
+  .recall-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .recall-schedule { padding: 14px 12px; }
+  .recall-event-panel, .recall-week-panel { padding: 14px; }
+  .recall-event-panel li { grid-template-columns: 7px minmax(0, 1fr); }
+  .recall-event-panel li > small { grid-column: 2; }
 }
 
 /* Laper-inspired study workspace: sparse shell, one primary task, contextual detail. */

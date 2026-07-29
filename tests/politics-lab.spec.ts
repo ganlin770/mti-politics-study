@@ -109,22 +109,33 @@ test('keeps a later active lesson aligned with its external practice log', async
 
 test('recovers from malformed legacy local progress instead of blanking the app', async ({ page }) => {
   await page.evaluate(() => {
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     localStorage.setItem('politics-lab-state-v1:guest', JSON.stringify({
       schemaVersion: 1,
       activeLessonId: 'missing-lesson',
       lessons: { 'marx-01': null },
       quizAttempts: { broken: null },
       practiceLogs: [{ id: 'bad', lessonId: 'marx-01', wrongReason: null }],
+      recallProgress: {
+        'recall-marx-01': {
+          cardId: 'recall-marx-01', dueOn: today, intervalDays: 0, reviews: 1,
+          lapses: 1, streak: 0, lastRating: 'again', lastReviewedAt: now.toISOString(),
+        },
+      },
       dailyMinutes: { nope: 'many' },
     }));
   });
   await page.reload();
   await expect(page.getByRole('heading', { name: '今天，从马原导论开始' })).toBeVisible();
   await expect(page.getByTestId('today-chain')).toContainText('马原 · 导论');
+  await page.goto('/#/recall');
+  await expect(page.getByTestId('recall-history-list')).toContainText('马克思主义最鲜明的政治立场是什么？');
+  await expect(page.getByTestId('daily-recall-review')).toContainText('1 张不同卡片');
   await expect(page.locator('vite-error-overlay')).toHaveCount(0);
 });
 
-test('runs the politics recall loop and persists the wrong-card queue', async ({ page }, testInfo) => {
+test('shows textbook-aligned answers and persists exact review history', async ({ page }, testInfo) => {
   const consoleErrors: string[] = [];
   page.on('console', (message) => {
     if (message.type() === 'error') consoleErrors.push(message.text());
@@ -139,17 +150,25 @@ test('runs the politics recall loop and persists the wrong-card queue', async ({
 
   await page.getByTestId('reveal-answer').click();
   await expect(page.getByTestId('recall-answer')).toContainText('人民群众的根本利益');
+  await expect(page.getByTestId('recall-answer')).toContainText('标准化参考答案');
+  await expect(page.getByTestId('recall-answer-basis')).toContainText('《马克思主义基本原理》2023年版');
+  await expect(page.getByTestId('recall-answer-basis').getByRole('link')).toHaveAttribute('href', /^https:\/\/xuanshu\.hep\.com\.cn\//);
   await page.getByTestId('recall-again').click();
   await expect(page.getByTestId('recall-workspace')).toContainText('哲学基本问题包含哪两个方面？');
+  await expect(page.getByTestId('daily-recall-review')).toContainText('抽背次数');
+  await expect(page.getByTestId('daily-recall-review')).toContainText('10 分钟后复习');
+  await expect(page.getByTestId('recall-history-list')).toContainText('马克思主义最鲜明的政治立场是什么？');
 
   await page.getByRole('button', { name: /错题卡/ }).click();
-  await expect(page.getByTestId('recall-workspace')).toContainText('马克思主义最鲜明的政治立场是什么？');
+  await expect(page.getByTestId('recall-empty')).toContainText('错题复习尚未到期');
   const persisted = await page.evaluate(() => JSON.parse(localStorage.getItem('politics-lab-state-v1:guest') || '{}'));
-  expect(persisted.recallProgress['recall-marx-01']).toMatchObject({ lastRating: 'again', dueOn: expect.any(String) });
+  expect(persisted.recallProgress['recall-marx-01']).toMatchObject({ lastRating: 'again', dueOn: expect.any(String), dueAt: expect.any(String), stage: 0 });
+  expect(persisted.recallHistory).toHaveLength(1);
+  expect(persisted.recallHistory[0]).toMatchObject({ cardId: 'recall-marx-01', rating: 'again', intervalLabel: '10分钟' });
 
   await page.reload();
-  await expect(page.getByTestId('recall-workspace')).toContainText('马克思主义最鲜明的政治立场是什么？');
-  await expect(page.getByTestId('recall-answer')).toHaveCount(0);
+  await expect(page.getByTestId('daily-recall-review')).toContainText('马克思主义最鲜明的政治立场是什么？');
+  await expect(page.getByTestId('daily-recall-review')).toContainText('抽背次数');
   await expect(page.locator('vite-error-overlay')).toHaveCount(0);
   expect(consoleErrors).toEqual([]);
 });

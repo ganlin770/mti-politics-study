@@ -1,12 +1,19 @@
 import type { PoliticsRecallCard } from '../types';
+import { RECALL_ANSWER_BASIS_ID_BY_SUBJECT } from './recallAnswerBases';
 
 const SOURCE = {
   source: 'original-core-recall',
   sourceLabel: '原创核心抽背（非肖1000、非历年真题）',
 } as const;
 
-function card(input: Omit<PoliticsRecallCard, 'source' | 'sourceLabel'>): PoliticsRecallCard {
-  return { ...input, ...SOURCE };
+function card(input: Omit<PoliticsRecallCard, 'source' | 'sourceLabel' | 'answerBasisId' | 'answerStatus' | 'answerVerifiedAt'>): PoliticsRecallCard {
+  return {
+    ...input,
+    ...SOURCE,
+    answerBasisId: RECALL_ANSWER_BASIS_ID_BY_SUBJECT[input.subject],
+    answerStatus: 'textbook-aligned',
+    answerVerifiedAt: '2026-07-29',
+  };
 }
 
 export const POLITICS_RECALL_CARDS: PoliticsRecallCard[] = [
@@ -20,7 +27,7 @@ export const POLITICS_RECALL_CARDS: PoliticsRecallCard[] = [
   card({ id: 'recall-marx-08', subject: 'marx', lessonId: 'marx-07', kind: 'relationship', prompt: '量变与质变的辩证关系是什么？', answer: '量变是质变的必要准备，质变是量变的必然结果；质变又为新的量变开辟道路。既要重视量的积累，也要善于抓住时机促成飞跃，并坚持适度原则。', memoryHook: '量变作准备，质变成结果，再开新量变。', keywords: ['量变', '质变', '适度'] }),
   card({ id: 'recall-marx-09', subject: 'marx', lessonId: 'marx-09', kind: 'concept', prompt: '实践的基本特征有哪些？', answer: '实践具有客观实在性、自觉能动性和社会历史性。实践是人能动地改造客观世界的物质活动，也是认识的来源、动力、目的和检验真理的唯一标准。', memoryHook: '客观、能动、社会历史；来源动力目的标准。', keywords: ['客观实在性', '社会历史性', '实践标准'] }),
   card({ id: 'recall-marx-10', subject: 'marx', lessonId: 'marx-10', kind: 'relationship', prompt: '感性认识和理性认识是什么关系？', answer: '感性认识是认识的初级阶段，直接而具体；理性认识是高级阶段，间接而抽象。二者相互依赖，感性认识有待深化为理性认识，理性认识必须以感性材料为基础并回到实践。', memoryHook: '感性是材料，理性抓本质，最后回实践。', keywords: ['感性认识', '理性认识', '回到实践'] }),
-  card({ id: 'recall-marx-11', subject: 'marx', lessonId: 'marx-11', kind: 'relationship', prompt: '真理的绝对性和相对性如何统一？', answer: '真理的绝对性指真理包含不依赖于人的客观内容并能够不断接近完整认识；相对性指具体真理有条件、有范围且认识有限。绝对真理通过相对真理表现，无数相对真理构成绝对真理。', memoryHook: '内容客观是绝对，条件范围有限是相对。', keywords: ['绝对真理', '相对真理', '条件性'] }),
+  card({ id: 'recall-marx-11', subject: 'marx', lessonId: 'marx-11', kind: 'relationship', prompt: '真理的绝对性和相对性如何统一？', answer: '真理的绝对性是指真理主客观统一的确定性和发展的无限性，具有无条件性、无限性；真理的相对性是指人们在一定条件下对客观事物及其规律的正确认识总是有限度的、不完善的，具有有条件性、有限性。二者相互依存、相互包含，并在一定条件下相互转化。', memoryHook: '绝对看确定无限，相对看条件有限；二者辩证统一。', keywords: ['无条件性和无限性', '有条件性和有限性', '辩证统一'] }),
   card({ id: 'recall-marx-12', subject: 'marx', lessonId: 'marx-12', kind: 'relationship', prompt: '社会基本矛盾及其运动规律是什么？', answer: '生产力与生产关系、经济基础与上层建筑的矛盾是社会基本矛盾。生产关系必须适合生产力状况，上层建筑必须适合经济基础状况，这一运动推动社会形态发展。', memoryHook: '生产力推生产关系，经济基础定上层建筑。', keywords: ['生产力', '生产关系', '经济基础', '上层建筑'] }),
   card({ id: 'recall-marx-13', subject: 'marx', lessonId: 'marx-13', kind: 'significance', prompt: '为什么说人民群众是历史的创造者？', answer: '人民群众是社会物质财富和精神财富的创造者，是社会变革的决定力量。群众观点强调相信、依靠、服务群众；群众路线要求一切为了群众、一切依靠群众，从群众中来、到群众中去。', memoryHook: '创物质、创精神、促变革；为了依靠、从来到去。', keywords: ['人民群众', '群众观点', '群众路线'] }),
   card({ id: 'recall-marx-14', subject: 'marx', lessonId: 'marx-14', kind: 'relationship', prompt: '商品的二因素和劳动的二重性如何对应？', answer: '商品具有使用价值和价值二因素。生产商品的具体劳动形成使用价值，抽象劳动形成价值。劳动二重性决定商品二因素，是理解马克思主义政治经济学的枢纽。', memoryHook: '具体劳动造使用价值，抽象劳动造价值。', keywords: ['使用价值', '价值', '具体劳动', '抽象劳动'] }),
@@ -34,11 +41,11 @@ export const POLITICS_RECALL_CARDS: PoliticsRecallCard[] = [
   card({ id: 'recall-morals-03', subject: 'morals', lessonId: 'morals-02', kind: 'relationship', prompt: '理想与现实是什么关系？', answer: '理想源于现实又超越现实，现实是理想的基础，理想在一定条件下能够转化为现实。实现理想具有长期性、艰巨性和曲折性，需要把远大理想同阶段性目标、个人奋斗同社会需要结合。', memoryHook: '现实生理想，实践让理想变现实。', keywords: ['理想', '现实', '实践'] }),
   card({ id: 'recall-morals-04', subject: 'morals', lessonId: 'morals-03', kind: 'concept', prompt: '中国精神的基本内容是什么？', answer: '中国精神以爱国主义为核心的民族精神和以改革创新为核心的时代精神为基本内容。二者相辅相成，共同构成凝聚民族力量、推进复兴伟业的精神动力。', memoryHook: '民族精神爱国，时代精神创新。', keywords: ['爱国主义', '改革创新', '中国精神'] }),
   card({ id: 'recall-morals-05', subject: 'morals', lessonId: 'morals-04', kind: 'concept', prompt: '社会主义核心价值观三个层面的内容是什么？', answer: '国家层面是富强、民主、文明、和谐；社会层面是自由、平等、公正、法治；个人层面是爱国、敬业、诚信、友善。三个层面相互联系、相互贯通。', memoryHook: '国家富民文和，社会自平公法，个人爱敬诚友。', keywords: ['国家层面', '社会层面', '个人层面'] }),
-  card({ id: 'recall-morals-06', subject: 'morals', lessonId: 'morals-05', kind: 'concept', prompt: '道德的主要功能有哪些？', answer: '道德具有认识、规范、调节、激励、导向和教育等功能，其中认识功能帮助把握社会道德关系，规范和调节功能通过评价、示范等方式协调人与人、人与社会的关系。', memoryHook: '认识关系，规范行为，调节冲突，再激励导向教育。', keywords: ['认识功能', '规范功能', '调节功能'] }),
+  card({ id: 'recall-morals-06', subject: 'morals', lessonId: 'morals-05', kind: 'concept', prompt: '道德的主要功能有哪些？', answer: '道德的主要功能包括认识功能、规范功能和调节功能。认识功能反映社会现实特别是社会经济关系；规范功能引导和规范社会成员行为；调节功能通过评价等方式指导和纠正行为、协调人际关系，此外道德还具有导向、激励、教育等功能。', memoryHook: '主要三项：认识关系、规范行为、调节关系。', keywords: ['认识功能', '规范功能', '调节功能'] }),
   card({ id: 'recall-morals-07', subject: 'morals', lessonId: 'morals-05', kind: 'method', prompt: '新时代公民道德建设的重点和着力点是什么？', answer: '以为人民服务为核心、以集体主义为原则，以爱祖国、爱人民、爱劳动、爱科学、爱社会主义为基本要求，把社会公德、职业道德、家庭美德、个人品德建设作为着力点。', memoryHook: '核心为人民，原则集体主义，四德落地。', keywords: ['为人民服务', '集体主义', '四德'] }),
   card({ id: 'recall-morals-08', subject: 'morals', lessonId: 'morals-06', kind: 'concept', prompt: '我国社会主义法律的本质特征是什么？', answer: '我国法律体现党的主张和人民意志的统一，具有科学性和先进性，是中国特色社会主义建设的重要保障。法律由国家制定或认可并由国家强制力保证实施，同时以权利义务为主要内容。', memoryHook: '党的主张与人民意志统一，国家强制保障。', keywords: ['人民意志', '国家强制力', '权利义务'] }),
   card({ id: 'recall-morals-09', subject: 'morals', lessonId: 'morals-06', kind: 'concept', prompt: '全面依法治国的总目标是什么？', answer: '建设中国特色社会主义法治体系、建设社会主义法治国家。前者强调形成完备的法律规范、高效的法治实施、严密的法治监督、有力的法治保障和完善的党内法规体系。', memoryHook: '一体系一国家：法治体系 + 法治国家。', keywords: ['法治体系', '法治国家', '全面依法治国'] }),
-  card({ id: 'recall-morals-10', subject: 'morals', lessonId: 'morals-07', kind: 'relationship', prompt: '如何理解法律权利与法律义务的关系？', answer: '权利和义务相互依存、目的与手段相统一，并具有结构上的相关关系。没有无义务的权利，也没有无权利的义务；公民既要依法行使权利，也要自觉履行义务。', memoryHook: '权利义务相依相成，依法行权也依法履责。', keywords: ['权利', '义务', '相互依存'] }),
+  card({ id: 'recall-morals-10', subject: 'morals', lessonId: 'morals-07', kind: 'relationship', prompt: '如何理解法律权利与法律义务的关系？', answer: '法律权利和法律义务相互依存，法律权利是法律义务设定和履行的目的，法律义务是法律权利实现的手段，二者还具有二重性，即一个行为可以同时是权利行为和义务行为。公民既要依法行使权利，也要自觉履行义务。', memoryHook: '相互依存、目的手段、一个行为可有二重性。', keywords: ['相互依存', '目的与手段', '二重性'] }),
 
   card({ id: 'recall-history-01', subject: 'history', lessonId: 'history-01', kind: 'relationship', prompt: '近代中国社会的主要矛盾和两大历史任务是什么？', answer: '主要矛盾是帝国主义和中华民族的矛盾、封建主义和人民大众的矛盾。两大历史任务是争取民族独立、人民解放，以及实现国家富强、人民幸福；前一任务为后一任务扫清障碍。', memoryHook: '两对矛盾，两大任务；先独立解放，再富强幸福。', keywords: ['主要矛盾', '民族独立', '国家富强'] }),
   card({ id: 'recall-history-02', subject: 'history', lessonId: 'history-02', kind: 'significance', prompt: '洋务运动的历史作用和失败原因是什么？', answer: '洋务运动发展了近代企业、培养了技术人才，并一定程度抵制外国经济侵略、冲击封建观念。但它以维护封建统治为目的，具有封建性、依赖性和腐朽性，未能改变半殖民地半封建社会性质。', memoryHook: '办近代企业有作用，保封建统治定失败。', keywords: ['洋务运动', '封建性', '近代企业'] }),
@@ -59,7 +66,7 @@ export const POLITICS_RECALL_CARDS: PoliticsRecallCard[] = [
   card({ id: 'recall-mao-04', subject: 'mao', lessonId: 'mao-03', kind: 'method', prompt: '为什么中国革命必须走农村包围城市、武装夺取政权的道路？', answer: '近代中国是半殖民地半封建社会，外无民族独立、内无民主制度，强大敌人长期占据中心城市；农民是革命主力军，农村是敌人统治薄弱环节。特殊国情决定必须走这条道路。', memoryHook: '敌强占城市，农民是主力，农村较薄弱。', keywords: ['特殊国情', '农民主力', '农村根据地'] }),
   card({ id: 'recall-mao-05', subject: 'mao', lessonId: 'mao-03', kind: 'concept', prompt: '新民主主义革命的三大法宝及其关系是什么？', answer: '统一战线、武装斗争、党的建设是三大法宝。统一战线解决团结谁，武装斗争解决以什么方式斗争，党的建设保证领导核心；党的建设与统一战线、武装斗争密切结合。', memoryHook: '团结谁、怎么打、谁领导。', keywords: ['统一战线', '武装斗争', '党的建设'] }),
   card({ id: 'recall-mao-06', subject: 'mao', lessonId: 'mao-04', kind: 'concept', prompt: '党在过渡时期总路线的主要内容是什么？', answer: '在一个相当长时期内，逐步实现国家的社会主义工业化，并逐步实现国家对农业、手工业和资本主义工商业的社会主义改造，概括为“一化三改”。工业化是主体，三大改造是两翼。', memoryHook: '一化三改：主体工业化，两翼三改造。', keywords: ['一化三改', '社会主义工业化', '三大改造'] }),
-  card({ id: 'recall-mao-07', subject: 'mao', lessonId: 'mao-04', kind: 'method', prompt: '我国社会主义改造道路的主要经验是什么？', answer: '坚持社会主义工业化建设与社会主义改造同时并举，采取积极引导、逐步过渡的方式，用和平方法改造资本主义工商业，并对不同对象采取有区别的政策，避免急剧社会震荡。', memoryHook: '建设改造并举，积极引导渐进，区别对象和平过渡。', keywords: ['同时并举', '逐步过渡', '和平赎买'] }),
+  card({ id: 'recall-mao-07', subject: 'mao', lessonId: 'mao-04', kind: 'method', prompt: '我国社会主义改造道路的主要经验是什么？', answer: '坚持社会主义工业化建设与社会主义改造同时并举，采取积极引导、逐步过渡的方式，对不同对象采取有区别的政策；对资本主义工商业采用国家资本主义的过渡形式并实行和平赎买，避免剧烈社会震荡。', memoryHook: '建设改造并举，积极引导渐进，区别对象、和平赎买。', keywords: ['同时并举', '逐步过渡', '和平赎买'] }),
   card({ id: 'recall-mao-08', subject: 'mao', lessonId: 'mao-05', kind: 'relationship', prompt: '社会主义社会基本矛盾有什么特点？', answer: '基本矛盾仍是生产关系和生产力、上层建筑和经济基础之间的矛盾，但总体上是非对抗性的，可以通过社会主义制度本身的调整和改革不断解决。正确处理人民内部矛盾是国家政治生活主题。', memoryHook: '矛盾仍在但非对抗，用制度调整改革来解决。', keywords: ['社会基本矛盾', '非对抗性', '改革'] }),
 
   card({ id: 'recall-new-era-01', subject: 'new-era', lessonId: 'new-era-01', kind: 'concept', prompt: '新时代坚持和发展中国特色社会主义的总任务是什么？', answer: '实现社会主义现代化和中华民族伟大复兴，在全面建成小康社会基础上分两步走，建成富强民主文明和谐美丽的社会主义现代化强国，以中国式现代化推进民族复兴。', memoryHook: '总任务：现代化 + 民族复兴。', keywords: ['总任务', '社会主义现代化', '民族复兴'] }),
@@ -68,8 +75,8 @@ export const POLITICS_RECALL_CARDS: PoliticsRecallCard[] = [
   card({ id: 'recall-new-era-04', subject: 'new-era', lessonId: 'new-era-02', kind: 'concept', prompt: '中国式现代化的中国特色有哪些？', answer: '中国式现代化是人口规模巨大的现代化、全体人民共同富裕的现代化、物质文明和精神文明相协调的现代化、人与自然和谐共生的现代化、走和平发展道路的现代化。', memoryHook: '人口大、共富裕、两文明、人自然、和平路。', keywords: ['人口规模', '共同富裕', '和平发展'] }),
   card({ id: 'recall-new-era-05', subject: 'new-era', lessonId: 'new-era-04', kind: 'concept', prompt: '全面深化改革的总目标是什么？', answer: '完善和发展中国特色社会主义制度，推进国家治理体系和治理能力现代化。前一句规定根本方向，后一句规定在根本方向指引下完善制度和提升治理效能的鲜明指向。', memoryHook: '完善制度定方向，治理现代化定指向。', keywords: ['全面深化改革', '制度完善', '治理现代化'] }),
   card({ id: 'recall-new-era-06', subject: 'new-era', lessonId: 'new-era-05', kind: 'concept', prompt: '新发展理念的内容和首要任务是什么？', answer: '新发展理念是创新、协调、绿色、开放、共享；高质量发展是全面建设社会主义现代化国家的首要任务。完整、准确、全面贯彻新发展理念，要加快构建新发展格局。', memoryHook: '创协绿开共，落脚高质量，格局双循环。', keywords: ['新发展理念', '高质量发展', '新发展格局'] }),
-  card({ id: 'recall-new-era-07', subject: 'new-era', lessonId: 'new-era-07', kind: 'relationship', prompt: '教育、科技、人才在现代化建设中分别处于什么位置？', answer: '教育是基础，科技是关键，人才是根本。教育、科技、人才是全面建设社会主义现代化国家的基础性、战略性支撑，必须坚持教育优先发展、科技自立自强、人才引领驱动。', memoryHook: '教育基础、科技关键、人才根本。', keywords: ['教育优先', '科技自立自强', '人才引领'] }),
-  card({ id: 'recall-new-era-08', subject: 'new-era', lessonId: 'new-era-08', kind: 'concept', prompt: '全过程人民民主“全过程”体现在哪里？', answer: '它把选举民主与协商民主、民主选举与民主协商、民主决策、民主管理、民主监督贯通起来，把过程民主和成果民主、程序民主和实质民主、直接民主和间接民主相统一。', memoryHook: '选举协商贯通五环，过程成果、程序实质、直接间接三统一。', keywords: ['全过程人民民主', '民主环节', '三统一'] }),
+  card({ id: 'recall-new-era-07', subject: 'new-era', lessonId: 'new-era-07', kind: 'relationship', prompt: '教育、科技、人才在现代化建设中处于什么位置？', answer: '教育、科技、人才是中国式现代化的基础性、战略性支撑。必须坚持科技是第一生产力、人才是第一资源、创新是第一动力，坚持教育优先发展、科技自立自强、人才引领驱动，一体推进教育科技人才事业发展。', memoryHook: '基础性战略性支撑；三个第一；教育优先、科技自强、人才引领。', keywords: ['基础性战略性支撑', '三个第一', '一体推进'] }),
+  card({ id: 'recall-new-era-08', subject: 'new-era', lessonId: 'new-era-08', kind: 'concept', prompt: '全过程人民民主“全过程”体现在哪里？', answer: '全过程人民民主把选举民主和协商民主结合起来，把民主选举、民主协商、民主决策、民主管理、民主监督贯通起来，把过程民主和成果民主、程序民主和实质民主、直接民主和间接民主、人民民主和国家意志相统一。', memoryHook: '选举协商结合，五环贯通，四组统一。', keywords: ['选举民主和协商民主', '五个民主环节', '四组统一'] }),
   card({ id: 'recall-new-era-09', subject: 'new-era', lessonId: 'new-era-09', kind: 'concept', prompt: '全面依法治国的总目标和根本保证是什么？', answer: '总目标是建设中国特色社会主义法治体系、建设社会主义法治国家；党的领导是中国特色社会主义法治之魂，是全面依法治国的根本保证。依法治国与依规治党要有机统一。', memoryHook: '一体系一国家，党的领导作保证。', keywords: ['法治体系', '法治国家', '党的领导'] }),
   card({ id: 'recall-new-era-10', subject: 'new-era', lessonId: 'new-era-10', kind: 'concept', prompt: '文化自信为什么是更基础、更广泛、更深厚的自信？', answer: '文化自信是一个国家、一个民族发展中最基本、最深沉、最持久的力量。坚定文化自信要坚持马克思主义在意识形态领域指导地位，推动中华优秀传统文化创造性转化、创新性发展。', memoryHook: '文化给最基本深沉持久的力量，传统文化要两创。', keywords: ['文化自信', '指导地位', '创造性转化'] }),
   card({ id: 'recall-new-era-11', subject: 'new-era', lessonId: 'new-era-11', kind: 'concept', prompt: '共同富裕应当怎样理解？', answer: '共同富裕是全体人民共同富裕，是人民群众物质生活和精神生活都富裕，不是少数人的富裕，也不是整齐划一的平均主义。它是长期历史过程，要在高质量发展中扎实推进。', memoryHook: '全体、物质精神、长期推进，不等于平均主义。', keywords: ['共同富裕', '全体人民', '高质量发展'] }),

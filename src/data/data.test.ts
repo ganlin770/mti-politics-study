@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   MARX_INTRO_SELF_TESTS,
   POLITICS_LESSONS,
+  POLITICS_RECALL_ANSWER_BASES,
   POLITICS_RECALL_CARDS,
   POLITICS_SUBJECTS,
   RESOURCE_AUDIT,
@@ -93,6 +94,7 @@ describe('politics recall deck', () => {
   it('ships 60 original cards in the same five-subject order as the Quark main route', () => {
     expect(POLITICS_RECALL_CARDS).toHaveLength(60);
     expect(new Set(POLITICS_RECALL_CARDS.map((card) => card.id)).size).toBe(60);
+    expect(POLITICS_RECALL_ANSWER_BASES).toHaveLength(5);
     expect(
       Object.fromEntries(POLITICS_SUBJECTS.map((subject) => [
         subject.id,
@@ -106,6 +108,12 @@ describe('politics recall deck', () => {
       expect(card.sourceLabel).toBe('原创核心抽背（非肖1000、非历年真题）');
       expect(card.answer.length).toBeGreaterThan(35);
       expect(card.keywords.length).toBeGreaterThanOrEqual(3);
+      expect(card.answerStatus).toBe('textbook-aligned');
+      expect(card.answerVerifiedAt).toBe('2026-07-29');
+      const basis = POLITICS_RECALL_ANSWER_BASES.find((item) => item.id === card.answerBasisId);
+      expect(basis?.subject).toBe(card.subject);
+      expect(basis?.publisher).toBe('高等教育出版社');
+      expect(basis?.url).toMatch(/^https:\/\/xuanshu\.hep\.com\.cn\//);
     }
   });
 });

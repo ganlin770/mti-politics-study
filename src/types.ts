@@ -98,6 +98,17 @@ export type PoliticsRecallCardKind =
   | "method"
   | "significance";
 
+export interface PoliticsRecallAnswerBasis {
+  id: string;
+  subject: PoliticsSubjectId;
+  title: string;
+  edition: string;
+  publisher: "高等教育出版社";
+  url: string;
+  supplementalTitle?: string;
+  supplementalUrl?: string;
+}
+
 export interface PoliticsRecallCard {
   id: string;
   subject: PoliticsSubjectId;
@@ -107,6 +118,10 @@ export interface PoliticsRecallCard {
   answer: string;
   memoryHook: string;
   keywords: string[];
+  /** The official textbook record used to standardize the wording and scoring points. */
+  answerBasisId: string;
+  answerStatus: "textbook-aligned";
+  answerVerifiedAt: "2026-07-29";
   source: "original-core-recall";
   sourceLabel: "原创核心抽背（非肖1000、非历年真题）";
 }

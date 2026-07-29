@@ -33,12 +33,26 @@ export interface PracticeLog {
 export interface RecallProgress {
   cardId: string;
   dueOn: string;
+  dueAt: string;
+  /** 0 is the 10-minute relearning step; 1-7 are the expanding day intervals. */
+  stage: number;
   intervalDays: number;
   reviews: number;
   lapses: number;
   streak: number;
   lastRating: RecallRating;
   lastReviewedAt: string;
+}
+
+export interface RecallReviewLog {
+  id: string;
+  cardId: string;
+  rating: RecallRating;
+  reviewedAt: string;
+  previousStage: number;
+  nextStage: number;
+  dueAt: string;
+  intervalLabel: string;
 }
 
 export interface PoliticsStudyState {
@@ -51,5 +65,6 @@ export interface PoliticsStudyState {
   quizAttempts: Record<string, QuizAttempt>;
   practiceLogs: PracticeLog[];
   recallProgress: Record<string, RecallProgress>;
+  recallHistory: RecallReviewLog[];
   dailyMinutes: Record<string, number>;
 }
