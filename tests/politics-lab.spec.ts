@@ -144,23 +144,41 @@ test('shows textbook-aligned answers and persists exact review history', async (
   await openRecall(page, testInfo.project.name);
   await expect(page).toHaveURL(/#\/recall$/);
   await expect(page.getByRole('heading', { name: '政治抽背' })).toBeVisible();
+  await expect(page.getByTestId('recall-preparation')).toContainText('准备好后，进入全屏专注抽背');
+  await expect(page.getByTestId('recall-focus-overlay')).toHaveCount(0);
+  await page.getByTestId('start-focus-recall').click();
+  await expect(page.getByTestId('recall-focus-overlay')).toBeVisible();
+  const overlayGeometry = await page.getByTestId('recall-focus-overlay').evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return { left: rect.left, top: rect.top, width: rect.width, height: rect.height, viewportWidth: innerWidth, viewportHeight: innerHeight };
+  });
+  expect(overlayGeometry).toMatchObject({ left: 0, top: 0, width: overlayGeometry.viewportWidth, height: overlayGeometry.viewportHeight });
   await expect(page.getByTestId('recall-workspace')).toContainText('马克思主义最鲜明的政治立场是什么？');
   await expect(page.getByText('原创核心抽背（非肖1000、非历年真题）')).toBeVisible();
   await expect(page.getByTestId('recall-answer')).toHaveCount(0);
 
   await page.getByTestId('reveal-answer').click();
   await expect(page.getByTestId('recall-answer')).toContainText('人民群众的根本利益');
-  await expect(page.getByTestId('recall-answer')).toContainText('标准化参考答案');
+  await expect(page.getByTestId('recall-answer')).toContainText('完整标准化参考答案');
+  await expect(page.getByTestId('recall-answer-structure')).toContainText('完整作答结构');
   await expect(page.getByTestId('recall-answer-basis')).toContainText('《马克思主义基本原理》2023年版');
   await expect(page.getByTestId('recall-answer-basis').getByRole('link')).toHaveAttribute('href', /^https:\/\/xuanshu\.hep\.com\.cn\//);
+  await page.getByTestId('recall-answer-basis').scrollIntoViewIfNeeded();
+  await expect(page.getByTestId('recall-answer-basis')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
   await page.getByTestId('recall-again').click();
   await expect(page.getByTestId('recall-workspace')).toContainText('哲学基本问题包含哪两个方面？');
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('recall-focus-overlay')).toHaveCount(0);
   await expect(page.getByTestId('daily-recall-review')).toContainText('抽背次数');
   await expect(page.getByTestId('daily-recall-review')).toContainText('10 分钟后复习');
   await expect(page.getByTestId('recall-history-list')).toContainText('马克思主义最鲜明的政治立场是什么？');
 
   await page.getByRole('button', { name: /错题卡/ }).click();
+  await page.getByTestId('start-focus-recall').click();
   await expect(page.getByTestId('recall-empty')).toContainText('错题复习尚未到期');
+  await page.getByTestId('exit-focus-recall').click();
+  await expect(page.getByTestId('recall-focus-overlay')).toHaveCount(0);
   const persisted = await page.evaluate(() => JSON.parse(localStorage.getItem('politics-lab-state-v1:guest') || '{}'));
   expect(persisted.recallProgress['recall-marx-01']).toMatchObject({ lastRating: 'again', dueOn: expect.any(String), dueAt: expect.any(String), stage: 0 });
   expect(persisted.recallHistory).toHaveLength(1);
