@@ -68,6 +68,8 @@ await supabase.from('politics_study_events').insert({
 - `payload` 必须是 JSON 对象，单个事件最大约 256 KiB。
 - `preferences` 必须是 JSON 对象，最大约 64 KiB。
 - `event_type` 使用小写命名空间格式，例如 `lesson.started`、`quiz.answered`、`review.completed`。
+- 政治抽背记录保存在状态快照的 `recallProgress` 对象中；每张卡只保存到期日、间隔、复习次数、遗忘次数、连续答对数和最后判定，不保存课程或题库正文。
+- 每次抽背判定追加 `recall.rated` 事件，`item_key` 为稳定卡片 ID，`payload` 只包含 `rating`、`dueOn` 与 `intervalDays`。
 - 离线重试必须复用同一个 `event_id`；`(user_id, event_id)` 唯一约束会阻止重复事件。
 - `created_at` 是数据库写入时间；`occurred_at` 才是客户端实际发生时间。
 - 资料正文、课程视频或整套版权题库不应写入事件表；这里只保存资源 ID、进度、作答结果和统计数据。

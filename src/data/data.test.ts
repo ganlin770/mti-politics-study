@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   MARX_INTRO_SELF_TESTS,
   POLITICS_LESSONS,
+  POLITICS_RECALL_CARDS,
   POLITICS_SUBJECTS,
   RESOURCE_AUDIT,
 } from './index';
@@ -84,6 +85,27 @@ describe('original diagnostic questions', () => {
       expect(question.options).toHaveLength(4);
       expect(question.correctOptionIds.length).toBeGreaterThan(0);
       expect(question.explanation.length).toBeGreaterThan(20);
+    }
+  });
+});
+
+describe('politics recall deck', () => {
+  it('ships 60 original cards in the same five-subject order as the Quark main route', () => {
+    expect(POLITICS_RECALL_CARDS).toHaveLength(60);
+    expect(new Set(POLITICS_RECALL_CARDS.map((card) => card.id)).size).toBe(60);
+    expect(
+      Object.fromEntries(POLITICS_SUBJECTS.map((subject) => [
+        subject.id,
+        POLITICS_RECALL_CARDS.filter((card) => card.subject === subject.id).length,
+      ])),
+    ).toEqual({ marx: 18, morals: 10, history: 12, mao: 8, 'new-era': 12 });
+
+    for (const card of POLITICS_RECALL_CARDS) {
+      expect(POLITICS_LESSONS.some((lesson) => lesson.id === card.lessonId)).toBe(true);
+      expect(card.source).toBe('original-core-recall');
+      expect(card.sourceLabel).toBe('原创核心抽背（非肖1000、非历年真题）');
+      expect(card.answer.length).toBeGreaterThan(35);
+      expect(card.keywords.length).toBeGreaterThanOrEqual(3);
     }
   });
 });

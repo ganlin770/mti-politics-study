@@ -91,3 +91,22 @@ export interface PoliticsResourceAudit {
   items: ResourceAuditItem[];
   missingModules: Array<"current-affairs" | "sprint" | "past-papers">;
 }
+
+export type PoliticsRecallCardKind =
+  | "concept"
+  | "relationship"
+  | "method"
+  | "significance";
+
+export interface PoliticsRecallCard {
+  id: string;
+  subject: PoliticsSubjectId;
+  lessonId: string;
+  kind: PoliticsRecallCardKind;
+  prompt: string;
+  answer: string;
+  memoryHook: string;
+  keywords: string[];
+  source: "original-core-recall";
+  sourceLabel: "原创核心抽背（非肖1000、非历年真题）";
+}

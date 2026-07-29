@@ -12,6 +12,7 @@ import {
 import { POLITICS_LESSONS } from '../data';
 import { authRedirectUrl, isSupabaseConfigured, supabase } from '../lib/supabase';
 import type { SelfTestOptionId, SelfTestQuestion } from '../types';
+import { nextRecallProgress, recallDay } from '../utils/recall';
 import type {
   CloudStatus,
   LessonProgress,
@@ -19,6 +20,8 @@ import type {
   PoliticsStudyState,
   PracticeLog,
   QuizAttempt,
+  RecallProgress,
+  RecallRating,
 } from './studyTypes';
 
 const STORAGE_PREFIX = 'politics-lab-state-v1';
@@ -47,6 +50,7 @@ function freshState(): PoliticsStudyState {
     lessons: {},
     quizAttempts: {},
     practiceLogs: [],
+    recallProgress: {},
     dailyMinutes: {},
   };
 }
@@ -119,6 +123,27 @@ function normalizeState(value: unknown): PoliticsStudyState {
       dailyMinutes[day] = Math.max(0, Math.min(1_440, Number(raw) || 0));
     }
   }
+  const recallProgress: PoliticsStudyState['recallProgress'] = {};
+  if (candidate.recallProgress && typeof candidate.recallProgress === 'object') {
+    for (const [cardId, raw] of Object.entries(candidate.recallProgress).slice(0, 500)) {
+      if (!raw || typeof raw !== 'object') continue;
+      const item = raw as Partial<RecallProgress>;
+      const lastRating = ['again', 'fuzzy', 'known'].includes(String(item.lastRating))
+        ? item.lastRating as RecallRating
+        : null;
+      if (!lastRating || !/^\d{4}-\d{2}-\d{2}$/.test(String(item.dueOn))) continue;
+      recallProgress[cardId] = {
+        cardId: safeText(item.cardId, 100) || safeText(cardId, 100),
+        dueOn: String(item.dueOn),
+        intervalDays: Math.max(0, Math.min(60, Number(item.intervalDays) || 0)),
+        reviews: Math.max(1, Math.min(10_000, Number(item.reviews) || 1)),
+        lapses: Math.max(0, Math.min(10_000, Number(item.lapses) || 0)),
+        streak: Math.max(0, Math.min(10_000, Number(item.streak) || 0)),
+        lastRating,
+        lastReviewedAt: safeText(item.lastReviewedAt, 40) || new Date().toISOString(),
+      };
+    }
+  }
   const activeLessonId = POLITICS_LESSONS.some((lesson) => lesson.id === candidate.activeLessonId)
     ? candidate.activeLessonId as string
     : FIRST_LESSON_ID;
@@ -131,6 +156,7 @@ function normalizeState(value: unknown): PoliticsStudyState {
     lessons,
     quizAttempts,
     practiceLogs,
+    recallProgress,
     dailyMinutes,
   };
 }
@@ -199,6 +225,11 @@ function mergeStudyStates(remoteValue: PoliticsStudyState, localValue: PoliticsS
   for (const [day, minutes] of Object.entries(local.dailyMinutes)) {
     dailyMinutes[day] = Math.max(dailyMinutes[day] || 0, minutes);
   }
+  const recallProgress = { ...remote.recallProgress };
+  for (const [cardId, item] of Object.entries(local.recallProgress)) {
+    const existing = recallProgress[cardId];
+    if (!existing || item.lastReviewedAt >= existing.lastReviewedAt) recallProgress[cardId] = item;
+  }
   const localIsNewer = Date.parse(local.updatedAt) >= Date.parse(remote.updatedAt);
   return normalizeState({
     schemaVersion: 1,
@@ -209,6 +240,7 @@ function mergeStudyStates(remoteValue: PoliticsStudyState, localValue: PoliticsS
     lessons,
     quizAttempts,
     practiceLogs: [...logMap.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 300),
+    recallProgress,
     dailyMinutes,
   });
 }
@@ -225,6 +257,7 @@ interface StudyContextValue {
   answerQuestion: (question: SelfTestQuestion, selected: SelfTestOptionId[]) => void;
   resetQuiz: (lessonId: string) => void;
   savePracticeLog: (input: Omit<PracticeLog, 'id' | 'createdAt'>) => PracticeLog;
+  rateRecallCard: (cardId: string, rating: RecallRating) => RecallProgress;
   sendMagicLink: (email: string) => Promise<string>;
   importGuestProgress: () => Promise<string>;
   signOut: () => Promise<void>;
@@ -544,6 +577,30 @@ export function StudyProvider({ children }: { children: ReactNode }) {
     [appendEvent, mutate],
   );
 
+  const rateRecallCard = useCallback(
+    (cardId: string, rating: RecallRating) => {
+      const now = new Date();
+      const previous = stateRef.current.recallProgress[cardId];
+      const next = nextRecallProgress(cardId, previous, rating, now);
+      const today = recallDay(now);
+      const firstReviewToday = !previous || recallDay(new Date(previous.lastReviewedAt)) !== today;
+      mutate((current) => ({
+        ...current,
+        recallProgress: { ...current.recallProgress, [cardId]: next },
+        dailyMinutes: firstReviewToday
+          ? { ...current.dailyMinutes, [today]: (current.dailyMinutes[today] || 0) + 1 }
+          : current.dailyMinutes,
+      }));
+      appendEvent('recall.rated', cardId, {
+        rating,
+        dueOn: next.dueOn,
+        intervalDays: next.intervalDays,
+      });
+      return next;
+    },
+    [appendEvent, mutate],
+  );
+
   const sendMagicLink = useCallback(async (email: string) => {
     if (!supabase) throw new Error('云同步尚未配置，当前仍可本机使用。');
     const { error } = await supabase.auth.signInWithOtp({
@@ -561,7 +618,8 @@ export function StudyProvider({ children }: { children: ReactNode }) {
     const hasProgress =
       Object.keys(guest.lessons).length > 0 ||
       Object.keys(guest.quizAttempts).length > 0 ||
-      guest.practiceLogs.length > 0;
+      guest.practiceLogs.length > 0 ||
+      Object.keys(guest.recallProgress).length > 0;
     if (!hasProgress) return '本机匿名进度为空，无需导入。';
 
     const imported: PoliticsStudyState = {
@@ -596,6 +654,7 @@ export function StudyProvider({ children }: { children: ReactNode }) {
       answerQuestion,
       resetQuiz,
       savePracticeLog,
+      rateRecallCard,
       sendMagicLink,
       importGuestProgress,
       signOut,
@@ -611,6 +670,7 @@ export function StudyProvider({ children }: { children: ReactNode }) {
       answerQuestion,
       resetQuiz,
       savePracticeLog,
+      rateRecallCard,
       sendMagicLink,
       importGuestProgress,
       signOut,

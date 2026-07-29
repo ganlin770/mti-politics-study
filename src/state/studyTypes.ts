@@ -2,6 +2,7 @@ import type { SelfTestOptionId } from '../types';
 
 export type LessonStatus = 'not-started' | 'learning' | 'completed';
 export type CloudStatus = 'local' | 'connecting' | 'synced' | 'error';
+export type RecallRating = 'again' | 'fuzzy' | 'known';
 
 export interface LessonProgress {
   status: LessonStatus;
@@ -29,6 +30,17 @@ export interface PracticeLog {
   createdAt: string;
 }
 
+export interface RecallProgress {
+  cardId: string;
+  dueOn: string;
+  intervalDays: number;
+  reviews: number;
+  lapses: number;
+  streak: number;
+  lastRating: RecallRating;
+  lastReviewedAt: string;
+}
+
 export interface PoliticsStudyState {
   schemaVersion: 1;
   revision: number;
@@ -38,5 +50,6 @@ export interface PoliticsStudyState {
   lessons: Record<string, LessonProgress>;
   quizAttempts: Record<string, QuizAttempt>;
   practiceLogs: PracticeLog[];
+  recallProgress: Record<string, RecallProgress>;
   dailyMinutes: Record<string, number>;
 }
