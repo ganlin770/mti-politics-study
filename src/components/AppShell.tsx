@@ -21,6 +21,7 @@ import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 're
 import { useStudy } from '../state/StudyProvider';
 import { AuthDialog } from './AuthDialog';
 import { HashLink } from './HashLink';
+import { OPEN_AUTH_DIALOG_EVENT } from '../lib/appEvents';
 
 const NAVIGATION = [
   { to: '/', label: '今日执行', icon: CalendarCheck2 },
@@ -84,6 +85,12 @@ export function AppShell({ currentPath, children }: { currentPath: string; child
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    const handleAuthRequest = () => setAuthOpen(true);
+    window.addEventListener(OPEN_AUTH_DIALOG_EVENT, handleAuthRequest);
+    return () => window.removeEventListener(OPEN_AUTH_DIALOG_EVENT, handleAuthRequest);
+  }, []);
 
   const syncTitle = user
     ? cloudStatus === 'synced' ? '已同步' : cloudStatus === 'connecting' ? '正在同步' : cloudStatus === 'error' ? '同步异常' : '云端账号'

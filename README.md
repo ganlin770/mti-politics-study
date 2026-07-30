@@ -16,6 +16,7 @@
 - 资料审计：分开标记目录存在、实际播放、部分覆盖与待补缺口。
 - 数据趋势：五科完成度、练题量、正确率和学习热力。
 - 本机 + 云同步：未登录也可用；登录后使用 Supabase Auth、RLS 和 revision 冲突检测同步。
+- 政治抽背 AI 助教：翻面后可用 Kimi K3 讲解和追问，Low / High / Max 可调且默认 Max；静态标准答案始终作为核对基线。
 
 ## 资料结论
 
@@ -48,9 +49,9 @@ npm run test:e2e
 
 ## 数据库与安全
 
-迁移和 RLS 验收见 [docs/database.md](docs/database.md)。三张表都使用独立的 `politics_*` 命名，不复用旧 MTI 应用的数据表。
+迁移、RLS、AI Edge Function 与部署验收见 [supabase/README.md](supabase/README.md) 和 [docs/database.md](docs/database.md)。所有表都使用独立的 `politics_*` 命名，不复用旧 MTI 应用的数据表。
 
-公开构建中只允许 Supabase publishable key。不要提交 `service_role`，也不要把带 token、分享码或个人参数的夸克链接放入任何 `VITE_*` 环境变量。
+公开构建中只允许 Supabase publishable key。AI 网关 URL、网关 Key、固定模型和系统提示词都由 `politics-ai` Edge Function 在服务端持有；不要把网关 Key、`service_role` 或带 token 的个人夸克链接放入任何 `VITE_*` 环境变量、localStorage 或 GitHub Pages 构建变量。
 
 ## 视觉验收
 

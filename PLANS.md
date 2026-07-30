@@ -138,3 +138,33 @@
 3. 空格显示完整答案，1/2/3 完成判定，Esc 或“退出抽背”回到准备页，已完成记录即时保留。
 4. 每张已揭示卡显示“完整标准化参考答案”和对应题型的三步作答结构，同时保留当年考试口径提示。
 5. lint、typecheck、unit、build、desktop/mobile e2e 与 Browser 截图、控制台、交互验收全部通过。
+
+## 2026-07-30 Kimi K3 政治抽背助教
+
+### 目标与范围
+
+- [x] 核对 `mti-shangan` 的实际请求：固定 `model: kimi-k3`，Low / High / Max 映射到 `reasoning_effort`；“K3 Max”不是另一模型，而是 `kimi-k3 + max`。
+- [x] 新增 Supabase Edge Function，将网关 URL、访问 Key、模型名和系统提示词全部留在服务端，不把敏感配置编译进 GitHub Pages。
+- [x] 抽背翻面后提供 AI 讲解与自由追问；默认 Max，可独立切换 Low / High / Max，并在切卡、退出或重试时正确取消旧请求。
+- [x] 服务端只接受已登录用户、固定模型与三档算力，限制 Origin、请求大小、输出长度、超时和用户配额；不保存完整提示词与回答正文。
+- [x] 以当前卡的标准化参考答案、采分关键词、教材依据和题型结构为唯一站内判分基线；AI 只负责解释、诊断与补强，资料未覆盖时必须明确说明不确定。
+- [x] 补齐单元测试、Edge Function 测试、桌面/手机 E2E、安全扫描、真实浏览器视觉与交互验收。
+- [ ] 在已登录的 Supabase 项目应用 migration、设置 Secret 与用户 UUID 白名单、部署 Function，并用真实登录会话验证 Kimi 无回退响应；本轮因 Supabase / GitHub OAuth 均要求重新登录而未执行。
+- [ ] 经明确授权后提交并推送当前分支，让 GitHub Pages 使用新前端；本轮遵守仓库边界，未自动提交或推送。
+
+### 数据与安全边界
+
+- 浏览器只向 `politics-ai` 发送卡片 ID、受限的卡片上下文、算力档位和可选追问；不发送网关地址、网关 Key、模型选择或系统提示词。
+- Edge Function 通过 Supabase JWT 获取用户身份；匿名学习仍可用，但 AI 入口要求登录且用户 UUID 必须进入服务端白名单，并设置用户级与全站级双重配额，避免把付费网关变成公开代理。
+- 新增 `politics_ai_requests` 仅保存用户、请求 ID、模式、档位和请求时间等配额元数据；不保存卡片答案、用户问题、系统提示词或模型正文。
+- 服务端固定 `kimi-k3`，客户端非法模型或非法档位直接拒绝；上游回退若发生必须在归一化响应中显式标注，不能让 UI 继续冒充 Kimi。
+- AI 文本按纯文本段落渲染，不使用 `dangerouslySetInnerHTML`；任何来自卡片或用户的内容都按不可信引用材料包裹，不能覆盖系统规则。
+
+### 验收条件
+
+1. 未登录点击 AI 时明确提示登录；已登录后浏览器 Network 只出现 Supabase Function 请求，网页源码、`dist`、localStorage 和控制台均不存在网关 Key。
+2. 默认显示 “Kimi K3 · Max 深度”，Low / High / Max 会分别送到服务端并映射为对应 `reasoning_effort`；不存在误导性的 Fast 或伪 Max 模型名。
+3. AI 第一屏先给核心结论与采分点拆解，再给易漏辨析、30—60 秒复述和记忆钩子；没有学习者口述时不得虚构个人错漏，资料未覆盖的信息必须标记为补充或不确定。
+4. 切到下一张、退出全屏、重新生成或网络失败时不会串答；旧的完整结果保留，失败状态可重试，上一张回答不能落到下一张。
+5. 无 JWT 返回 401、非法 Origin / effort / body 返回 4xx、超额返回 429、超时返回 504；上游内部错误和 Secret 不透传给浏览器。
+6. lint、typecheck、unit、build、desktop/mobile e2e、Edge Function 测试与 Browser 控制台、截图、交互验收全部通过。

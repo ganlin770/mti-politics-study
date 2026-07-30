@@ -1,0 +1,4 @@
+[functions.politics-ai]
+# Authentication is verified inside the function against Supabase Auth so every
+# failure can use the same normalized { code, message } response envelope.
+verify_jwt = false
