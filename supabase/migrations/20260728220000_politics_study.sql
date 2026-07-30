@@ -106,15 +106,17 @@ security invoker
 set search_path = pg_catalog, public
 as $$
 declare
-  current_time timestamptz := statement_timestamp();
+  -- Avoid PostgreSQL's CURRENT_TIME keyword, which resolves to timetz and
+  -- cannot be assigned to the timestamptz audit columns.
+  v_statement_time timestamptz := statement_timestamp();
 begin
   if tg_op = 'INSERT' then
-    new.created_at := current_time;
+    new.created_at := v_statement_time;
   else
     new.created_at := old.created_at;
   end if;
 
-  new.updated_at := current_time;
+  new.updated_at := v_statement_time;
   return new;
 end;
 $$;
