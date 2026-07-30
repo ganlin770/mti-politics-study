@@ -8,4 +8,5 @@ coverage/
 .env.*
 !.env.example
 .bootstrap/
+supabase/.env.ai.local
 *.tsbuildinfo

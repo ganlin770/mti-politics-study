@@ -1,5 +1,6 @@
 import { Cloud, CloudOff, LoaderCircle, LogOut, Mail, X } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { useStudy } from '../state/StudyProvider';
 
 interface AuthDialogProps {
@@ -17,10 +18,14 @@ export function AuthDialog({ open, onClose }: AuthDialogProps) {
     if (!open) return;
     closeRef.current?.focus();
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        onClose();
+      }
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
   }, [onClose, open]);
 
   if (!open) return null;
@@ -65,7 +70,7 @@ export function AuthDialog({ open, onClose }: AuthDialogProps) {
     }
   }
 
-  return (
+  return createPortal(
     <div className="dialog-layer" role="presentation">
       <button className="dialog-scrim" type="button" aria-label="关闭云同步" onClick={onClose} />
       <section className="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="auth-title">
@@ -105,6 +110,7 @@ export function AuthDialog({ open, onClose }: AuthDialogProps) {
         ) : null}
         <p className="form-note" role="status">{message || (user ? '匿名进度不会默认并入任何账号；只有你点击导入时才会合并。' : '登录链接有效期内点击一次即可，网站不会保存你的邮箱密码。')}</p>
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { RecallAiPanel } from '../components/RecallAiPanel';
 import {
   LESSON_BY_ID,
   POLITICS_RECALL_CARDS,
@@ -73,7 +74,7 @@ function subjectName(subjectId: PoliticsSubjectId) {
 }
 
 function RecallSession({ filter, onExit }: { filter: RecallFilter; onExit: () => void }) {
-  const { state, rateRecallCard } = useStudy();
+  const { state, rateRecallCard, user } = useStudy();
   const initialCards = useMemo(
     () => buildRecallQueue(POLITICS_RECALL_CARDS, state.recallProgress, filter),
     // The session is deliberately frozen until the learner changes the filter or starts another round.
@@ -114,7 +115,7 @@ function RecallSession({ filter, onExit }: { filter: RecallFilter; onExit: () =>
     document.body.style.overflow = 'hidden';
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
-      if (target?.matches('input, textarea, select, [contenteditable="true"]')) return;
+      if (target?.matches('input, textarea, select, button, a[href], [role="button"], [contenteditable="true"]')) return;
       if (event.key === 'Escape') {
         event.preventDefault();
         onExit();
@@ -216,6 +217,7 @@ function RecallSession({ filter, onExit }: { filter: RecallFilter; onExit: () =>
               <li><span>3</span><div><b>最后自检</b><p>能否覆盖至少 3 个关键词，再显示答案。</p></div></li>
             </ol>
           )}
+          {revealed ? <RecallAiPanel key={`${current.id}:${user?.id || 'guest'}`} card={current} lesson={lesson || null} basis={basis || null} /> : null}
           <div className="recall-source-note"><Sparkles aria-hidden="true" /><span>{current.sourceLabel}<small>答案按官方教材标准化；最终以当年考试大纲、命题和阅卷要求为准。</small></span></div>
         </aside>
 

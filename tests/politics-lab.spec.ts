@@ -163,11 +163,32 @@ test('shows textbook-aligned answers and persists exact review history', async (
   await expect(page.getByTestId('recall-answer-structure')).toContainText('完整作答结构');
   await expect(page.getByTestId('recall-answer-basis')).toContainText('《马克思主义基本原理》2023年版');
   await expect(page.getByTestId('recall-answer-basis').getByRole('link')).toHaveAttribute('href', /^https:\/\/xuanshu\.hep\.com\.cn\//);
+  await expect(page.getByTestId('politics-ai-panel')).toContainText('Kimi K3 · Max 深度');
+  await expect(page.getByTestId('politics-ai-effort-max')).toHaveAttribute('aria-pressed', 'true');
+  await page.getByTestId('politics-ai-effort-high').focus();
+  await page.keyboard.press('Space');
+  await expect(page.getByTestId('politics-ai-effort-high')).toHaveAttribute('aria-pressed', 'true');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('politics-ai-effort-v1'))).toBe('high');
+  await expect(page.getByTestId('politics-ai-panel')).toContainText('服务端 AI 尚未连接');
+  await expect(page.getByTestId('politics-ai-generate')).toHaveCount(0);
+  await page.evaluate(() => window.dispatchEvent(new Event('politics-lab:open-auth-dialog')));
+  const authDialog = page.getByRole('dialog', { name: '把进度带到每台设备' });
+  await expect(authDialog).toBeVisible();
+  const modalLayers = await page.evaluate(() => ({
+    auth: Number(getComputedStyle(document.querySelector('.dialog-layer')!).zIndex),
+    recall: Number(getComputedStyle(document.querySelector('.recall-focus-overlay')!).zIndex),
+  }));
+  expect(modalLayers.auth).toBeGreaterThan(modalLayers.recall);
+  await page.keyboard.press('Escape');
+  await expect(authDialog).toHaveCount(0);
+  await expect(page.getByTestId('recall-focus-overlay')).toBeVisible();
   await page.getByTestId('recall-answer-basis').scrollIntoViewIfNeeded();
   await expect(page.getByTestId('recall-answer-basis')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
   await page.getByTestId('recall-again').click();
   await expect(page.getByTestId('recall-workspace')).toContainText('哲学基本问题包含哪两个方面？');
+  await page.getByTestId('reveal-answer').click();
+  await expect(page.getByTestId('politics-ai-effort-high')).toHaveAttribute('aria-pressed', 'true');
   await page.keyboard.press('Escape');
   await expect(page.getByTestId('recall-focus-overlay')).toHaveCount(0);
   await expect(page.getByTestId('daily-recall-review')).toContainText('抽背次数');
