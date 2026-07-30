@@ -41,7 +41,9 @@ set search_path = pg_catalog, public
 as $$
 declare
   current_user_id uuid := auth.uid();
-  current_time timestamptz := statement_timestamp();
+  -- Avoid PostgreSQL's CURRENT_TIME keyword, which resolves to timetz even
+  -- when a PL/pgSQL variable with the same spelling is declared.
+  v_statement_time timestamptz := statement_timestamp();
   china_day_start timestamptz;
   china_next_day timestamptz;
   recent_minute_count integer := 0;
@@ -74,7 +76,7 @@ begin
   perform pg_advisory_xact_lock(hashtextextended(current_user_id::text, 0));
 
   china_day_start := (
-    date_trunc('day', current_time at time zone 'Asia/Shanghai')
+    date_trunc('day', v_statement_time at time zone 'Asia/Shanghai')
     at time zone 'Asia/Shanghai'
   );
   china_next_day := china_day_start + interval '1 day';
@@ -83,7 +85,7 @@ begin
   into recent_minute_count
   from public.politics_ai_requests as request_log
   where request_log.user_id = current_user_id
-    and request_log.created_at > current_time - interval '1 minute';
+    and request_log.created_at > v_statement_time - interval '1 minute';
 
   select count(*)::integer
   into current_daily_count
@@ -95,7 +97,7 @@ begin
   select count(*)::integer
   into global_recent_minute_count
   from public.politics_ai_requests as request_log
-  where request_log.created_at > current_time - interval '1 minute';
+  where request_log.created_at > v_statement_time - interval '1 minute';
 
   select count(*)::integer
   into global_daily_count
@@ -108,14 +110,14 @@ begin
       1,
       ceil(
         extract(epoch from (
-          min(request_log.created_at) + interval '1 minute' - current_time
+          min(request_log.created_at) + interval '1 minute' - v_statement_time
         ))
       )::integer
     )
     into minute_retry
     from public.politics_ai_requests as request_log
     where request_log.user_id = current_user_id
-      and request_log.created_at > current_time - interval '1 minute';
+      and request_log.created_at > v_statement_time - interval '1 minute';
   end if;
 
   if global_recent_minute_count >= constant_global_minute_limit then
@@ -123,13 +125,13 @@ begin
       1,
       ceil(
         extract(epoch from (
-          min(request_log.created_at) + interval '1 minute' - current_time
+          min(request_log.created_at) + interval '1 minute' - v_statement_time
         ))
       )::integer
     )
     into global_minute_retry
     from public.politics_ai_requests as request_log
-    where request_log.created_at > current_time - interval '1 minute';
+    where request_log.created_at > v_statement_time - interval '1 minute';
     minute_retry := greatest(minute_retry, global_minute_retry);
   end if;
 
@@ -137,7 +139,7 @@ begin
     daily_retry := greatest(
       1,
       ceil(
-        extract(epoch from (china_next_day - current_time))
+        extract(epoch from (china_next_day - v_statement_time))
       )::integer
     );
   end if;
@@ -147,7 +149,7 @@ begin
       daily_retry,
       1,
       ceil(
-        extract(epoch from (china_next_day - current_time))
+        extract(epoch from (china_next_day - v_statement_time))
       )::integer
     );
   end if;
@@ -172,7 +174,7 @@ begin
     current_user_id,
     p_mode,
     p_effort,
-    current_time
+    v_statement_time
   );
 
   allowed := true;
