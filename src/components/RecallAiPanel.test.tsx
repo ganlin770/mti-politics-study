@@ -68,6 +68,19 @@ describe('RecallAiPanel', () => {
     window.removeEventListener(OPEN_AUTH_DIALOG_EVENT, authEvents);
   });
 
+  it('shows a setup gate when the Supabase backend is unavailable', () => {
+    vi.mocked(useStudy).mockReturnValue({
+      user: null,
+      supabaseConfigured: false,
+    } as ReturnType<typeof useStudy>);
+
+    renderPanel();
+
+    expect(screen.getByRole('status')).toHaveTextContent('服务端 AI 尚未连接');
+    expect(screen.queryByTestId('politics-ai-login')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('politics-ai-generate')).not.toBeInTheDocument();
+  });
+
   it('sends the selected effort and labels an actual fallback model honestly', async () => {
     vi.mocked(requestPoliticsAi).mockResolvedValueOnce(response({
       effort: 'high',
