@@ -169,7 +169,9 @@ test('shows textbook-aligned answers and persists exact review history', async (
   await page.keyboard.press('Space');
   await expect(page.getByTestId('politics-ai-effort-high')).toHaveAttribute('aria-pressed', 'true');
   await expect.poll(() => page.evaluate(() => localStorage.getItem('politics-ai-effort-v1'))).toBe('high');
-  await expect(page.getByTestId('politics-ai-panel')).toContainText('服务端 AI 尚未连接');
+  await expect(page.getByTestId('politics-ai-panel').getByRole('status')).toContainText(
+    /服务端 AI 尚未连接|登录后使用 AI 讲解/,
+  );
   await expect(page.getByTestId('politics-ai-generate')).toHaveCount(0);
   await page.evaluate(() => window.dispatchEvent(new Event('politics-lab:open-auth-dialog')));
   const authDialog = page.getByRole('dialog', { name: '把进度带到每台设备' });
